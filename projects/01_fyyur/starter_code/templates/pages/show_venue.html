@@ -1,5 +1,5 @@
 {% extends 'layouts/main.html' %}
-{% block title %}Venue Search{% endblock %}
+{% block title %}{{ venue.name }} | Venue{% endblock %}
 {% block content %}
 <div class="row">
 	<div class="col-sm-6">
@@ -8,6 +8,8 @@
 		</h1>
 		<p class="subtitle">
 			ID: {{ venue.id }}
+			<button><a href="/venues/{{ venue.id }}/edit"><i class="fas fa-edit"></i></a></button>
+			<button class="delete-button" data-id="{{ venue.id }}"><i class="fas fa-trash" data-id="{{ venue.id }}"></i></button>
 		</p>
 		<div class="genres">
 			{% for genre in venue.genres %}
@@ -77,3 +79,17 @@
 
 {% endblock %}
 
+{% block scripts %}
+<script>
+	DelBtn = document.querySelector('.delete-button');
+	DelBtn.onclick = function (e) {
+		const venueId = e.target.dataset['id'];
+		fetch('/venues/' + venueId, {
+			method: 'DELETE'
+		})
+		.then(function () {
+			window.location.href = '/'
+		})
+	}
+</script>
+{% endblock %}

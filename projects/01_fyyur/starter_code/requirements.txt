@@ -1,4 +1,9 @@
-babel
-python-dateutil==2.6.0
-flask-moment
-flask-wtf
+Babel
+Python-dateutil==2.6.0
+psycopg2-binary
+SQLAlchemy
+Flask
+Flask-Moment
+Flask-WTF
+Flask-SQLAlchemy
+Flask-Migrate

@@ -7,7 +7,9 @@
 			{{ artist.name }}
 		</h1>
 		<p class="subtitle">
-			ID: {{ artist.id }}
+			ID: {{ artist.id }} 
+			<button><a href="/artists/{{ artist.id }}/edit"><i class="fas fa-edit"></i></a></button>
+			<button class="delete-button" data-id="{{ artist.id }}"><i class="fas fa-trash" data-id="{{ artist.id }}"></i></a></button>
 		</p>
 		<div class="genres">
 			{% for genre in artist.genres %}
@@ -74,3 +76,18 @@
 
 {% endblock %}
 
+{% block scripts %}
+<script>
+	DelBtn = document.querySelector('.delete-button');
+	DelBtn.onclick = function (e) {
+		console.log(event, e)
+		const artistId = e.target.dataset['id'];
+		fetch('/artists/' + artistId, {
+			method: 'DELETE'
+		})
+			.then(function () {
+				window.location.href = '/'
+			})
+	}
+</script>
+{% endblock %}

@@ -3,7 +3,6 @@ from fabric.contrib.console import confirm
 
 # prepare for deployment
 
-
 def test():
     with settings(warn_only=True):
         result = local(
@@ -29,7 +28,6 @@ def prepare():
 
 # deploy to heroku
 
-
 def pull():
     local("git pull origin master")
 
@@ -43,7 +41,6 @@ def heroku_test():
         "heroku run python test_tasks.py -v && heroku run python test_users.py -v"
     )
 
-
 def deploy():
     pull()
     test()
@@ -52,7 +49,6 @@ def deploy():
     heroku_test()
 
 # rollback
-
 
 def rollback():
     local("heroku rollback")
