@@ -1,11 +1,11 @@
 import os
 from sqlalchemy import Column, String, Integer, ForeignKey, create_engine
 from sqlalchemy.orm import relationship
+from sqlalchemy.schema import CheckConstraint
 from flask_sqlalchemy import SQLAlchemy
 import json
 
-database_name = "trivia"
-database_path = "postgres://{}/{}".format('localhost:5432', database_name)
+database_path = "postgresql://juliane:POSTGRES@localhost:5432/trivia"
 
 db = SQLAlchemy()
 
@@ -45,10 +45,14 @@ Question
 '''
 class Question(db.Model):  
   __tablename__ = 'questions'
+  __table_args__ = (
+    CheckConstraint('length(question) > 1', name='non_empty_question'),
+    CheckConstraint('length(answer) > 1', name='non_empty_answer')
+  )
 
   id = Column(Integer, primary_key=True)
-  question = Column(String)
-  answer = Column(String)
+  question = Column(String, nullable=False)
+  answer = Column(String, nullable=False)
   category = Column(Integer, ForeignKey('categories.id'))
   difficulty = Column(Integer)
 

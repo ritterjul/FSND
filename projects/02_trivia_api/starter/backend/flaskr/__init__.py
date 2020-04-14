@@ -22,27 +22,25 @@ def create_app(test_config=None):
 
   @app.route('/categories', methods=['GET'])
   def get_categories():
-    try:
-      query = Category.query.all()
-      categories = {category.id: category.type for category in query}
-      response = {'categories': categories}
-      return jsonify(response) 
-    except:
-      abort(500)   
+    query = Category.query.all()
+    categories = {category.id: category.type for category in query}
+    response = {
+      'success': True,
+      'categories': categories
+      }
+    return jsonify(response)    
   
   @app.route('/questions', methods=['GET'])
   def get_questions():
-    try:
-      query = Question.query.all()
-      questions = [question.format() for question in query]
-      query = Category.query.all()
-      categories = {category.id: category.type for category in query}
-    except:
-      abort(500)
+    query = Question.query.all()
+    questions = [question.format() for question in query]
+    query = Category.query.all()
+    categories = {category.id: category.type for category in query}
     
     page = request.args.get('page', 1, type=int)
     if page <= ceil(len(questions) / QUESTIONS_PER_PAGE):      
       response = {
+        'success': True,
         'questions': questions[(page - 1)*QUESTIONS_PER_PAGE:page*QUESTIONS_PER_PAGE],
         'total_questions': len(questions),
         'categories': categories,
@@ -54,14 +52,12 @@ def create_app(test_config=None):
     
   @app.route('/questions/<int:question_id>', methods=['DELETE'])
   def delete_question(question_id):
-    question = Question.query.get(question_id)
-    if question:
-      try:
-        question.delete()
-        return jsonify({'success': True})
-      except:
-        abort(500)
-    else:
+    try:
+      question = Question.query.get(question_id)
+      question.delete()
+      response = {'success': True}
+      return jsonify(response)
+    except:
       abort(404)
   
   @app.route('/questions', methods=['POST'])
@@ -74,27 +70,25 @@ def create_app(test_config=None):
         category=data['category'],
         difficulty=data['difficulty']
       )
-    except:
-      abort(404)
-
-    try:
       question.insert()
-      return jsonify({'success': True})
+      response = {
+        'id': question.id,
+        'success': True
+        }
+      return jsonify(response)
     except:
-      abort(500)
+      abort(422)
     
   @app.route('/searchQuestions', methods = ['POST'])
   def search_questions():
     data = request.get_json()
-    try:
-      query = Question.query.filter(Question.question.ilike('%{}%'.format(data['searchTerm'])))
-      questions = [question.format() for question in query]
-    except:
-      abort(500)
+    query = Question.query.filter(Question.question.ilike('%{}%'.format(data['searchTerm'])))
+    questions = [question.format() for question in query]
 
     page = request.args.get('page', 1, type=int)
     if (page <= ceil(len(questions) / QUESTIONS_PER_PAGE)) or (len(questions) == 0): # show empty page instead of error if search returns no results
       response = {
+        'success': True,
         'questions': questions[(page - 1)*QUESTIONS_PER_PAGE:page*QUESTIONS_PER_PAGE],
         'total_questions': len(questions),
         'current_category': None
@@ -105,18 +99,16 @@ def create_app(test_config=None):
 
   @app.route('/categories/<int:category_id>/questions', methods=['GET'])
   def get_questions_by_category(category_id):
-    try:
-      query = Question.query.filter(Question.category==category_id).all()
-      questions = [question.format() for question in query]
-    except:
-      abort(404)
+    query = Question.query.filter(Question.category==category_id).all()
+    questions = [question.format() for question in query]
     
     page = request.args.get('page', 1, type=int)
     if page <= ceil(len(questions) / QUESTIONS_PER_PAGE):
       response = {
-      'questions': questions[(page - 1)*QUESTIONS_PER_PAGE:page*QUESTIONS_PER_PAGE],
-      'total_questions': len(questions),
-      'current_category': category_id
+        'success': True,
+        'questions': questions[(page - 1)*QUESTIONS_PER_PAGE:page*QUESTIONS_PER_PAGE],
+        'total_questions': len(questions),
+        'current_category': category_id
       }
       return jsonify(response)
     else:
@@ -129,7 +121,7 @@ def create_app(test_config=None):
     category_id = data['quiz_category']['id']
 
     if category_id == 0:
-      query = Question.query.all()
+      query = Question.query
     else:
       query = Question.query.filter(Question.category == category_id)
     
@@ -140,11 +132,13 @@ def create_app(test_config=None):
         draw = randint(0, query.count()-1)
         question = query.offset(draw).first()
         response = {
-          'question' : question.format()
+          'success': True,
+          'question': question.format()
         }
       else:
         response = {
-          'question' : False
+          'success': True,
+          'question': False
         }
       
       return jsonify(response)
@@ -174,14 +168,6 @@ def create_app(test_config=None):
         "error": 422,
         "message": "Unprocessable entity"
         }), 422
-
-  @app.errorhandler(500)
-  def unprocessable(error):
-    return jsonify({
-        "success": False, 
-        "error": 500,
-        "message": "Internal server error"
-        }), 500
 
   return app
 
