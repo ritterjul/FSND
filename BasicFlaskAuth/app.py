@@ -7,9 +7,15 @@ from urllib.request import urlopen
 
 app = Flask(__name__)
 
-AUTH0_DOMAIN = @TODO_REPLACE_WITH_YOUR_DOMAIN
+AUTH0_DOMAIN = 'fsnd-ritterjul.eu.auth0.com'
 ALGORITHMS = ['RS256']
-API_AUDIENCE = @TODO_REPLACE_WITH_YOUR_API_AUDIENCE
+API_AUDIENCE = 'image'
+
+
+'''
+AuthError Exception
+A standardized way to communicate auth failure modes
+'''
 
 
 class AuthError(Exception):
@@ -52,9 +58,14 @@ def get_token_auth_header():
 
 
 def verify_decode_jwt(token):
+    # get the public key from Autho0
     jsonurl = urlopen(f'https://{AUTH0_DOMAIN}/.well-known/jwks.json')
     jwks = json.loads(jsonurl.read())
+
+    # get the data in the header
     unverified_header = jwt.get_unverified_header(token)
+
+    # choose our key
     rsa_key = {}
     if 'kid' not in unverified_header:
         raise AuthError({
@@ -71,6 +82,7 @@ def verify_decode_jwt(token):
                 'n': key['n'],
                 'e': key['e']
             }
+    # verify signature
     if rsa_key:
         try:
             payload = jwt.decode(
@@ -99,10 +111,11 @@ def verify_decode_jwt(token):
                 'code': 'invalid_header',
                 'description': 'Unable to parse authentication token.'
             }, 400)
-    raise AuthError({
-                'code': 'invalid_header',
-                'description': 'Unable to find the appropriate key.'
-            }, 400)
+    else:   
+        raise AuthError({
+            'code': 'invalid_header',
+                    'description': 'Unable to find the appropriate key.'
+        }, 400)
 
 
 def requires_auth(f):
@@ -112,13 +125,16 @@ def requires_auth(f):
         try:
             payload = verify_decode_jwt(token)
         except:
+            print('error')
             abort(401)
         return f(payload, *args, **kwargs)
 
     return wrapper
 
-@app.route('/headers')
+
+@app.route('/images')
 @requires_auth
 def headers(payload):
     print(payload)
     return 'Access Granted'
+
