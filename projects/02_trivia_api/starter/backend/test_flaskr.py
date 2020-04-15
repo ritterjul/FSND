@@ -23,7 +23,7 @@ class TriviaTestCase(unittest.TestCase):
             self.db.init_app(self.app)
             # create all tables
             self.db.create_all()
-    
+
     def tearDown(self):
         """Executed after each test"""
         pass
@@ -53,7 +53,8 @@ class TriviaTestCase(unittest.TestCase):
 
     def test_delete_question_existing(self):
         # post new question to be deleted
-        res = self.client().post('/questions', json={'question': 'New', 'answer': 'New', 'category': 1, 'difficulty': 1})
+        res = self.client().post('/questions',
+                                 json={'question': 'New', 'answer': 'New', 'category': 1, 'difficulty': 1})
         data = json.loads(res.data)
         # delete new question
         res = self.client().delete('/questions/' + str(data['id']))
@@ -71,7 +72,8 @@ class TriviaTestCase(unittest.TestCase):
 
     def test_post_question_valid(self):
         # post new question
-        res = self.client().post('/questions', json={'question': 'New', 'answer': 'New', 'category': 1, 'difficulty': 1})
+        res = self.client().post('/questions',
+                                 json={'question': 'New', 'answer': 'New', 'category': 1, 'difficulty': 1})
         data = json.loads(res.data)
 
         self.assertEqual(res.status_code, 200)
@@ -82,28 +84,32 @@ class TriviaTestCase(unittest.TestCase):
         res = self.client().delete('/questions/' + str(data['id']))
 
     def test_post_question_non_existing_category(self):
-        res = self.client().post('/questions', json={'question': 'New', 'answer': 'New', 'category': 100, 'difficulty': 1})
+        res = self.client().post('/questions',
+                                 json={'question': 'New', 'answer': 'New', 'category': 100, 'difficulty': 1})
         data = json.loads(res.data)
-        
+
         self.assertEqual(res.status_code, 422)
         self.assertFalse(data['success'])
-        
+
     def test_post_question_empty_question(self):
-        res = self.client().post('/questions', json={'question': '', 'answer': 'New', 'category': 1, 'difficulty': 1})
+        res = self.client().post('/questions',
+                                 json={'question': '', 'answer': 'New', 'category': 1, 'difficulty': 1})
         data = json.loads(res.data)
-        
+
         self.assertEqual(res.status_code, 422)
         self.assertFalse(data['success'])
 
     def test_post_question_empty_anwer(self):
-        res = self.client().post('/questions', json={'question': 'New', 'answer': '', 'category': 1, 'difficulty': 1})
+        res = self.client().post('/questions',
+                                 json={'question': 'New', 'answer': '', 'category': 1, 'difficulty': 1})
         data = json.loads(res.data)
-        
+
         self.assertEqual(res.status_code, 422)
         self.assertFalse(data['success'])
 
     def test_search_questions_existing_term_default_page(self):
-        res = self.client().post('/searchQuestions', json={'searchTerm': 'the'})
+        res = self.client().post('/searchQuestions',
+                                 json={'searchTerm': 'the'})
         data = json.loads(res.data)
 
         self.assertEqual(res.status_code, 200)
@@ -111,7 +117,8 @@ class TriviaTestCase(unittest.TestCase):
         self.assertTrue(data['total_questions'])
 
     def test_search_questions_non_existing_term_default_page(self):
-        res = self.client().post('/searchQuestions', json={'searchTerm': 'nonexistingterm'})
+        res = self.client().post('/searchQuestions',
+                                 json={'searchTerm': 'nonexistingterm'})
         data = json.loads(res.data)
 
         self.assertEqual(res.status_code, 200)
@@ -119,7 +126,8 @@ class TriviaTestCase(unittest.TestCase):
         self.assertFalse(data['total_questions'])
 
     def test_search_questions_existing_term_beyond_valid_page(self):
-        res = self.client().post('/searchQuestions?page=100', json={'searchTerm': 'the'})
+        res = self.client().post('/searchQuestions?page=100',
+                                 json={'searchTerm': 'the'})
         data = json.loads(res.data)
 
         self.assertEqual(res.status_code, 404)
@@ -151,7 +159,8 @@ class TriviaTestCase(unittest.TestCase):
         self.assertFalse(data['success'])
 
     def test_get_next_question_initial_question(self):
-        res = self.client().post('/quizzes', json={'previous_questions': [], 'quiz_category': {'id': 0, 'type': 'ALL'}})
+        res = self.client().post('/quizzes',
+                                 json={'previous_questions': [], 'quiz_category': {'id': 0, 'type': 'ALL'}})
         data = json.loads(res.data)
 
         self.assertEqual(res.status_code, 200)
@@ -159,7 +168,8 @@ class TriviaTestCase(unittest.TestCase):
         self.assertTrue(data['question'])
 
     def test_get_next_question_final_question(self):
-        res = self.client().post('/quizzes', json={'previous_questions': [20, 21, 22], 'quiz_category': {'id': 1, 'type': 'Science'}})
+        res = self.client().post('/quizzes',
+                                 json={'previous_questions': [20, 21, 22], 'quiz_category': {'id': 1, 'type': 'Science'}})
         data = json.loads(res.data)
 
         self.assertEqual(res.status_code, 200)
@@ -167,11 +177,13 @@ class TriviaTestCase(unittest.TestCase):
         self.assertFalse(data['question'])
 
     def test_get_next_question_non_existing_category(self):
-        res = self.client().post('/quizzes', json={'previous_questions': [], 'quiz_category': {'id': 1000, 'type': 'Error'}})
+        res = self.client().post('/quizzes',
+                                 json={'previous_questions': [], 'quiz_category': {'id': 1000, 'type': 'Error'}})
         data = json.loads(res.data)
 
         self.assertEqual(res.status_code, 404)
         self.assertFalse(data['success'])
+
 
 # Make the tests conveniently executable
 if __name__ == "__main__":
