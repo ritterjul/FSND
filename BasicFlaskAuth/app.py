@@ -11,7 +11,9 @@ AUTH0_DOMAIN = 'fsnd-ritterjul.eu.auth0.com'
 ALGORITHMS = ['RS256']
 API_AUDIENCE = 'image'
 
-
+LOGIN_URL = "https://fsnd-ritterjul.eu.auth0.com/authorize?audience=image&response_type=token&client_id=bhhkPc3PYmijhqa6dECNCSzT9glpebCx&redirect_uri=http://localhost:3000/callback"
+# use to obtain access token to perform tests
+recent_token = 'eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6ImZ6MGZQbmtIOEtxdy1ERTZaMTJTUSJ9.eyJpc3MiOiJodHRwczovL2ZzbmQtcml0dGVyanVsLmV1LmF1dGgwLmNvbS8iLCJzdWIiOiJhdXRoMHw1ZTk3MzZiYTY2YmFkNTBjODU3YTA2YzEiLCJhdWQiOiJpbWFnZSIsImlhdCI6MTU4NzA1MjcxNCwiZXhwIjoxNTg3MDU5OTE0LCJhenAiOiJiaGhrUGMzUFltaWpocWE2ZEVDTkNTelQ5Z2xwZWJDeCIsInNjb3BlIjoiIiwicGVybWlzc2lvbnMiOlsiZ2V0OmltYWdlcyIsInBvc3Q6aW1hZ2VzIl19.W8UOeZjiMu1IgTjqHeJY_RP3MYdwWuzsx2q4pDPHCgcokCDmoqJxvRSg941UwJvk2B2lXOJTMXdS8kaPz0RCDAwamhioEhFPGYUVRQwfQ2sNrfDolBwM_rTJpv-UBZ6uhpa7kvwObd7fJquC328dTecxJxYpa_k7pw9mQ3Cvk8ancuSI1_l18nrdTlqhYX_zQfMVF2mqra_BVHRurS6bp_C19smKMkPAPTwPIXwv5zOK84TXFLeyUI1a2Bw1O0uM1s6mrMUv83HOLDYku_MY0rAanJRbByc1bJQqnjWu-uYT4MfU2PJ3vb7Met8PUYGExTUEA6QDvAI6OzrHARtsgg'
 '''
 AuthError Exception
 A standardized way to communicate auth failure modes
@@ -28,33 +30,34 @@ def get_token_auth_header():
     """Obtains the Access Token from the Authorization Header
     """
     auth = request.headers.get('Authorization', None)
-    if not auth:
+    if auth:
+        parts = auth.split()
+        if parts[0].lower() != 'bearer':
+            raise AuthError({
+                'code': 'invalid_header',
+                'description': 'Authorization header must start with "Bearer".'
+            }, 401)
+
+        elif len(parts) == 1:
+            raise AuthError({
+                'code': 'invalid_header',
+                'description': 'Token not found.'
+            }, 401)
+
+        elif len(parts) > 2:
+            raise AuthError({
+                'code': 'invalid_header',
+                'description': 'Authorization header must be bearer token.'
+            }, 401)
+        else:
+            token = parts[1]
+            return token
+
+    else:
         raise AuthError({
             'code': 'authorization_header_missing',
             'description': 'Authorization header is expected.'
         }, 401)
-
-    parts = auth.split()
-    if parts[0].lower() != 'bearer':
-        raise AuthError({
-            'code': 'invalid_header',
-            'description': 'Authorization header must start with "Bearer".'
-        }, 401)
-
-    elif len(parts) == 1:
-        raise AuthError({
-            'code': 'invalid_header',
-            'description': 'Token not found.'
-        }, 401)
-
-    elif len(parts) > 2:
-        raise AuthError({
-            'code': 'invalid_header',
-            'description': 'Authorization header must be bearer token.'
-        }, 401)
-
-    token = parts[1]
-    return token
 
 
 def verify_decode_jwt(token):
@@ -118,23 +121,51 @@ def verify_decode_jwt(token):
         }, 400)
 
 
-def requires_auth(f):
-    @wraps(f)
-    def wrapper(*args, **kwargs):
-        token = get_token_auth_header()
-        try:
-            payload = verify_decode_jwt(token)
-        except:
-            print('error')
-            abort(401)
-        return f(payload, *args, **kwargs)
+def check_permissions(permission, payload):
+    if 'permissions' in payload:
+        if permission in payload['permissions']:
+            return True
+        else:
+            raise AuthError({
+                'code': 'unauthorized',
+                'description': 'Permission not found.'
+            }, 403)
+    else:
+        raise AuthError({
+            'code': 'invalid_claims',
+            'description': 'Token must include permissions'
+        }, 400)
+    
 
-    return wrapper
+def requires_auth(permission=''):
+    def requires_auth_decorator(f):
+        @wraps(f)
+        def wrapper(*args, **kwargs):
+            try:
+                token = get_token_auth_header()
+            except AuthError as err:
+                print(err.error['code'] + ': ' + err.error['description'])
+                abort(err.status_code)
+
+            try:
+                payload = verify_decode_jwt(token)
+            except AuthError as err:
+                print(err.error['code'] + ': ' + err.error['description'])
+                abort(err.status_code)
+                
+            try:
+                check_permissions(permission, payload)
+            except AuthError as err:
+                print(err.error['code'] + ': ' + err.error['description'])
+                abort(err.status_code)
+            return f(payload, *args, **kwargs)
+        return wrapper
+    return requires_auth_decorator
+
 
 
 @app.route('/images')
-@requires_auth
+@requires_auth('get:images')
 def headers(payload):
-    print(payload)
     return 'Access Granted'
 
