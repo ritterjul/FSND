@@ -16,9 +16,9 @@ CORS(app)
 !! NOTE THIS WILL DROP ALL RECORDS AND START YOUR DB FROM SCRATCH
 !! NOTE THIS MUST BE UNCOMMENTED ON FIRST RUN
 '''
-# db_drop_and_create_all()
+db_drop_and_create_all()
 
-## ROUTES
+# ROUTES
 '''
 @TODO implement endpoint
     GET /drinks
@@ -27,6 +27,17 @@ CORS(app)
     returns status code 200 and json {"success": True, "drinks": drinks} where drinks is the list of drinks
         or appropriate status code indicating reason for failure
 '''
+@app.route('/drinks', methods=['GET'])
+def get_drinks():
+    try:
+        drinks = Drink.query.all()
+        response = {
+            'success': True,
+            'drinks': [drink.short() for drink in drinks]
+        }
+        return jsonify(response)
+    except:
+        abort(500)
 
 
 '''
@@ -37,6 +48,18 @@ CORS(app)
     returns status code 200 and json {"success": True, "drinks": drinks} where drinks is the list of drinks
         or appropriate status code indicating reason for failure
 '''
+@app.route('/drinks-detail', methods=['GET'])
+@requires_auth('get:drinks-detail')
+def get_drinks_detail(payload):
+    try:
+        drinks = Drink.query.all()
+        response = {
+            'success': True,
+            'drinks': [drink.long() for drink in drinks]
+        }
+        return jsonify(response)
+    except:
+        abort(500)
 
 
 '''
@@ -48,6 +71,23 @@ CORS(app)
     returns status code 200 and json {"success": True, "drinks": drink} where drink an array containing only the newly created drink
         or appropriate status code indicating reason for failure
 '''
+@app.route('/drinks', methods=['POST'])
+@requires_auth('post:drinks')
+def create_drink(payload):
+    try:
+        data = request.get_json()
+        drink = Drink(
+            title=data['title'],
+            recipe=json.dumps([data['recipe']])
+        )
+        drink.insert()
+        response = {
+            'success': True,
+            'drinks': [drink.long()]
+        }
+        return jsonify(response)
+    except:
+        abort(500)
 
 
 '''
@@ -63,6 +103,24 @@ CORS(app)
 '''
 
 
+@app.route('/drinks/<int:drink_id>', methods=['PATCH'])
+@requires_auth('patch:drinks')
+def edit_drink(payload, drink_id):
+    drink = Drink.query.filter(Drink.id == drink_id).one_or_none()
+    if not drink:
+        abort(404)
+    data = request.get_json()
+    if 'title' in data:
+        drink.title = data['title']
+    if 'recipe' in data:
+        drink.recipe = json.dumps([data['recipe']])
+    response = {
+        'success': True,
+        'drinks': [drink.long()]
+    }
+    return jsonify(response)
+
+
 '''
 @TODO implement endpoint
     DELETE /drinks/<id>
@@ -75,33 +133,50 @@ CORS(app)
 '''
 
 
-## Error Handling
+@app.route('/drinks/<int:drink_id>', methods=['DELETE'])
+@requires_auth('delete:drinks')
+def delete_drink(payload, drink_id):
+    drink = Drink.query.filter(Drink.id == drink_id).one_or_none()
+    if not drink:
+        abort(404)
+    drink.delete()
+    response = {
+        'success': True,
+        'delete': drink_id
+    }
+    return jsonify(response)
+
+
 '''
-Example error handling for unprocessable entity
+Error handling
 '''
+
+
+@app.errorhandler(400)
+def bad_request(error):
+    return jsonify({
+        "success": False,
+        "error": 400,
+        "message": "Bad request"
+    }), 400
+
+
+@app.errorhandler(404)
+def not_found(error):
+    return jsonify({
+        "success": False,
+        "error": 404,
+        "message": "Not found"
+    }), 404
+
+
 @app.errorhandler(422)
 def unprocessable(error):
     return jsonify({
-                    "success": False, 
-                    "error": 422,
-                    "message": "unprocessable"
-                    }), 422
-
-'''
-@TODO implement error handlers using the @app.errorhandler(error) decorator
-    each error handler should return (with approprate messages):
-             jsonify({
-                    "success": False, 
-                    "error": 404,
-                    "message": "resource not found"
-                    }), 404
-
-'''
-
-'''
-@TODO implement error handler for 404
-    error handler should conform to general task above 
-'''
+        "success": False,
+        "error": 422,
+        "message": "Unprocessable entity"
+    }), 422
 
 
 '''
