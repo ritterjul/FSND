@@ -23,7 +23,7 @@ class AuthError(Exception):
 
 
 def get_token_auth_header():
-    """Obtains the Access Token from the Authorization Header
+    """Extracts and returns access token from authorization header
     """
     auth = request.headers.get('Authorization', None)
     if not auth:
@@ -39,7 +39,7 @@ def get_token_auth_header():
     elif len(auth.split()) == 1:
         raise AuthError({
             'code': 'invalid_header',
-            'description': 'Token not found.'
+            'description': 'Authorization header must be include type and token.'
         }, 401)
     elif len(auth.split()) > 2:
         raise AuthError({
@@ -51,25 +51,9 @@ def get_token_auth_header():
         return token
 
 
-def check_permissions(permission, payload):
-    """Obtains the Access Token from the Authorization Header
-    """
-    if 'permissions' not in payload:
-        raise AuthError({
-            'code': 'invalid_claims',
-            'description': 'Token must include permissions'
-        }, 403)
-    elif permission not in payload['permissions']:
-        raise AuthError({
-            'code': 'permission_missing',
-            'description': 'Permission not found.'
-        }, 403)
-    else:
-        return True
-
-
 def verify_decode_jwt(token):
-    # get public keys from Autho0
+    """Verifies JWT and returns decoded payload
+    """
     jsonurl = urlopen(f'https://{AUTH0_DOMAIN}/.well-known/jwks.json')
     jwks = json.loads(jsonurl.read())
 
@@ -78,10 +62,9 @@ def verify_decode_jwt(token):
     if 'kid' not in unverified_header:
         raise AuthError({
             'code': 'invalid_header',
-            'description': 'Authorization must contain key id.'
+            'description': 'Header of token must contain key id.'
         }, 401)
 
-    # find appropriate key
     rsa_key = {}
     for key in jwks['keys']:
         if key['kid'] == unverified_header['kid']:
@@ -96,10 +79,9 @@ def verify_decode_jwt(token):
     if not rsa_key:
         raise AuthError({
             'code': 'invalid_header',
-                    'description': 'Unable to find the appropriate key.'
+                    'description': 'Unable to find appropriate key for token.'
         }, 401)
 
-    # verify signature
     try:
         payload = jwt.decode(
             token,
@@ -117,13 +99,30 @@ def verify_decode_jwt(token):
     except jwt.JWTClaimsError:
         raise AuthError({
             'code': 'invalid_claims',
-            'description': 'Incorrect claims. Please, check the audience and issuer.'
+            'description': 'Incorrect claims. Please check the audience and issuer.'
         }, 401)
     except Exception:
         raise AuthError({
             'code': 'invalid_header',
-            'description': 'Unable to parse authentication token.'
-        }, 400)
+            'description': 'Unable to parse token.'
+        }, 401)
+
+
+def check_permissions(permission, payload):
+    """Checks permissions of JWT
+    """
+    if 'permissions' not in payload:
+        raise AuthError({
+            'code': 'invalid_claims',
+            'description': 'Token must include permissions'
+        }, 401)
+    elif permission not in payload['permissions']:
+        raise AuthError({
+            'code': 'permission_missing',
+            'description': 'Permission not found.'
+        }, 403)
+    else:
+        return True
 
 
 def requires_auth(permission=''):

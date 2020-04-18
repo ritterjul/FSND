@@ -22,64 +22,7 @@ export class DrinksService {
   url = environment.apiServerUrl;
 
   public items: {[key: number]: Drink} = {};
-  // = {
-  //                             1: {
-  //                             id: 1,
-  //                             title: 'matcha shake',
-  //                             recipe: [
-  //                                   {
-  //                                     name: 'milk',
-  //                                     color: 'grey',
-  //                                     parts: 1
-  //                                   },
-  //                                   {
-  //                                     name: 'matcha',
-  //                                     color: 'green',
-  //                                     parts: 3
-  //                                   },
-  //                                 ]
-  //                           },
-  //                           2: {
-  //                             id: 2,
-  //                             title: 'flatwhite',
-  //                             recipe: [
-
-  //                                   {
-  //                                     name: 'milk',
-  //                                     color: 'grey',
-  //                                     parts: 3
-  //                                   },
-  //                                   {
-  //                                     name: 'coffee',
-  //                                     color: 'brown',
-  //                                     parts: 1
-  //                                   },
-  //                                 ]
-  //                           },
-  //                           3: {
-  //                             id: 3,
-  //                             title: 'cap',
-  //                             recipe: [
-  //                                   {
-  //                                     name: 'foam',
-  //                                     color: 'white',
-  //                                     parts: 1
-  //                                   },
-  //                                   {
-  //                                     name: 'milk',
-  //                                     color: 'grey',
-  //                                     parts: 2
-  //                                   },
-  //                                   {
-  //                                     name: 'coffee',
-  //                                     color: 'brown',
-  //                                     parts: 1
-  //                                   },
-  //                                 ]
-  //                           }
-  //   };
-
-
+ 
   constructor(private auth: AuthService, private http: HttpClient) { }
 
   getHeaders() {
