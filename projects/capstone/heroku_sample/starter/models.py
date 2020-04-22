@@ -3,9 +3,9 @@ from sqlalchemy import Column, String, Integer, create_engine
 from flask_sqlalchemy import SQLAlchemy
 import json
 
-database_path = os.environ['DATABASE_URL']
+#database_path = os.environ['DATABASE_URL']
 
-#database_path = "postgres://juliane:POSTGRES@localhost:5432/heroku_sample"
+database_path = "postgres://juliane:POSTGRES@localhost:5432/heroku_sample"
 
 db = SQLAlchemy()
 
